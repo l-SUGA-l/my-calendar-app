@@ -2,26 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
-  --background-end-rgb: 255, 255, 255;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
-  }
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+  font-family: 'Arial', sans-serif;
+  background-color: #f7f7f7;
+  color: #333;
+  line-height: 1.6;
+}
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.today-info {
+  background-color: #fff;
+  padding: 20px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.today-info h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+  margin-top: 10px;
+}
+
+.weather-description {
+  font-size: 1.2rem;
+  color: #555;
+}
+
+.temperature {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.temperature-range {
+  font-size: 1rem;
+  color: #666;
+}
+
+.events {
+  list-style: none;
+  padding: 0;
+}
+
+.events li {
+  background-color: #fff;
+  padding: 10px;
+  margin: 5px 0;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.events button {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.events button:hover {
+  background-color: #d32f2f;
+}
+
+input {
+  padding: 10px;
+  width: 100%;
+  margin-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+button {
+  padding: 10px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #45a049;
+}
+
+section {
+  margin-bottom: 20px;
+}
+
+h3 {
+  font-size: 1.3rem;
+  margin-bottom: 10px;
+}
+
+h3, h2 {
+  font-weight: bold;
 }

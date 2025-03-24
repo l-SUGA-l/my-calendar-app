@@ -1,113 +1,184 @@
-import Image from 'next/image'
+"use client";
 
-export default function Home() {
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import FullCalendar from "@fullcalendar/react";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+import AIAssistant from "./components/AIAssistant";
+
+// 天気データ取得
+const fetchWeatherData = async (lat: number, lon: number) => {
+  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("APIキーが設定されていません");
+  }
+
+  const response = await axios.get(
+    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=ja`
+  );
+  return response.data;
+};
+
+// 逆ジオコーディング（地名取得）
+const fetchLocationName = async (lat: number, lon: number) => {
+  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+  const response = await axios.get(
+    `https://api.openweathermap.org/data/2.5/reverse?lat=${lat}&lon=${lon}&appid=${apiKey}&lang=ja`
+  );
+  return response.data[0]?.name || "不明";
+};
+
+const CalendarPage = () => {
+  const [weather, setWeather] = useState<string>("");
+  const [temperature, setTemperature] = useState<number>(0);
+  const [maxTemperature, setMaxTemperature] = useState<number>(0);
+  const [minTemperature, setMinTemperature] = useState<number>(0);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [locationName, setLocationName] = useState<string>("");
+  const [events, setEvents] = useState<any[]>([]);
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [newEventTitle, setNewEventTitle] = useState<string>("");
+
+  useEffect(() => {
+    const isProduction = process.env.NODE_ENV === "production";
+    const fetchWeather = async () => {
+      try {
+        if (isProduction) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              const { latitude, longitude } = position.coords;
+              setLatitude(latitude);
+              setLongitude(longitude);
+              const data = await fetchWeatherData(latitude, longitude);
+              setWeather(data.weather[0].description);
+              setTemperature(data.main.temp);
+              setMaxTemperature(data.main.temp_max);
+              setMinTemperature(data.main.temp_min);
+              setLoading(false);
+
+              const location = await fetchLocationName(latitude, longitude);
+              setLocationName(location);
+            },
+            () => {
+              alert("位置情報を取得できませんでした");
+              setLoading(false);
+            }
+          );
+        } else {
+          const data = await fetchWeatherData(34.6937, 135.5023); // 大阪府の緯度経度
+          setWeather(data.weather[0].description);
+          setTemperature(data.main.temp);
+          setMaxTemperature(data.main.temp_max);
+          setMinTemperature(data.main.temp_min);
+          setLoading(false);
+          setLocationName("大阪府");
+        }
+      } catch (error) {
+        console.error("天気情報の取得に失敗しました", error);
+        setLoading(false);
+      }
+    };
+
+    fetchWeather();
+
+    const storedEvents = localStorage.getItem("events");
+    if (storedEvents) {
+      setEvents(JSON.parse(storedEvents));
+    }
+  }, []);
+
+  const handleDateClick = (info: any) => {
+    setSelectedDate(info.dateStr);
+  };
+
+  const handleSaveEvent = () => {
+    if (selectedDate && newEventTitle) {
+      const newEvent = { title: newEventTitle, date: selectedDate };
+      const updatedEvents = [...events, newEvent];
+      setEvents(updatedEvents);
+      localStorage.setItem("events", JSON.stringify(updatedEvents));
+      setNewEventTitle("");
+      setSelectedDate(null);
+    }
+  };
+
+  const handleDeleteEvent = (date: string) => {
+    const updatedEvents = events.filter((event) => event.date !== date);
+    setEvents(updatedEvents);
+    localStorage.setItem("events", JSON.stringify(updatedEvents));
+  };
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm lg:flex">
-        <p className="fixed left-0 top-0 flex w-full justify-center border-b border-gray-300 bg-gradient-to-b from-zinc-200 pb-6 pt-8 backdrop-blur-2xl dark:border-neutral-800 dark:bg-zinc-800/30 dark:from-inherit lg:static lg:w-auto  lg:rounded-xl lg:border lg:bg-gray-200 lg:p-4 lg:dark:bg-zinc-800/30">
-          Get started by editing&nbsp;
-          <code className="font-mono font-bold">src/app/page.tsx</code>
-        </p>
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:h-auto lg:w-auto lg:bg-none">
-          <a
-            className="pointer-events-none flex place-items-center gap-2 p-8 lg:pointer-events-auto lg:p-0"
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className="dark:invert"
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
+    <div className="container">
+      {/* 今日の情報 */}
+      <section className="today-info">
+        <h2>{new Date().toLocaleDateString("ja-JP")}</h2>
+        <div className="weather-info">
+          <p className="weather-description">
+            {loading ? "天気情報を取得中..." : weather}
+          </p>
+          <p className="temperature">
+            {loading ? "..." : temperature}°C
+          </p>
+          <p className="temperature-range">
+            {loading ? "" : `最高: ${maxTemperature}°C / 最低: ${minTemperature}°C`}
+          </p>
         </div>
-      </div>
+        <p>{latitude && longitude ? `現在地: ${locationName}` : ""}</p>
+        {!loading && <AIAssistant weather={weather} temperature={temperature} />}
+      </section>
 
-      <div className="relative flex place-items-center before:absolute before:h-[300px] before:w-[480px] before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-[240px] after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 before:lg:h-[360px] z-[-1]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
+      {/* 今日の予定 */}
+      <section>
+        <h3>予定リスト</h3>
+        <ul className="events">
+          {events.map((event, index) => (
+            <li key={index}>
+              <span>{event.title} ({event.date})</span>
+              <button onClick={() => handleDeleteEvent(event.date)}>削除</button>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      {/* カレンダー */}
+      <section>
+        <FullCalendar
+          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+          initialView="timeGridDay"
+          headerToolbar={{
+            left: "title",
+            center: "dayGridMonth,timeGridWeek,timeGridDay",
+            right: "prev,next today",
+          }}
+          events={events}
+          dateClick={handleDateClick}
+          height="auto"
+          aspectRatio={1.5}  // 画面幅に合わせて縦横比を調整
+          contentHeight="auto"  // 高さを自動調整
         />
-      </div>
+      </section>
 
-      <div className="mb-32 grid text-center lg:max-w-5xl lg:w-full lg:mb-0 lg:grid-cols-4 lg:text-left">
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Docs{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Find in-depth information about Next.js features and API.
-          </p>
-        </a>
+      {/* 予定入力フォーム */}
+      {selectedDate && (
+        <section>
+          <h3>予定を入力</h3>
+          <input
+            type="text"
+            value={newEventTitle}
+            onChange={(e) => setNewEventTitle(e.target.value)}
+            placeholder="予定を入力"
+          />
+          <button onClick={handleSaveEvent}>保存</button>
+        </section>
+      )}
+    </div>
+  );
+};
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Learn{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Learn about Next.js in an interactive course with&nbsp;quizzes!
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Templates{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Explore the Next.js 13 playground.
-          </p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className="group rounded-lg border border-transparent px-5 py-4 transition-colors hover:border-gray-300 hover:bg-gray-100 hover:dark:border-neutral-700 hover:dark:bg-neutral-800/30"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2 className={`mb-3 text-2xl font-semibold`}>
-            Deploy{' '}
-            <span className="inline-block transition-transform group-hover:translate-x-1 motion-reduce:transform-none">
-              -&gt;
-            </span>
-          </h2>
-          <p className={`m-0 max-w-[30ch] text-sm opacity-50`}>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
-}
+export default CalendarPage;
