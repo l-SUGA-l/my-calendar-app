@@ -114,67 +114,81 @@ const CalendarPage = () => {
   };
 
   return (
-    <div className="container">
+    <div className="container mx-auto px-4 py-6">
       {/* 今日の情報 */}
-      <section className="today-info">
-        <h2>{new Date().toLocaleDateString("ja-JP")}</h2>
-        <div className="weather-info">
-          <p className="weather-description">
+      <section className="today-info bg-white shadow-md rounded-lg p-4 mb-6">
+        <h2 className="text-2xl font-semibold text-center sm:text-3xl">
+          {new Date().toLocaleDateString("ja-JP")}
+        </h2>
+        <div className="weather-info mt-4">
+          <p className="weather-description text-lg sm:text-xl">
             {loading ? "天気情報を取得中..." : weather}
           </p>
-          <p className="temperature">
+          <p className="temperature text-xl sm:text-2xl">
             {loading ? "..." : temperature}°C
           </p>
-          <p className="temperature-range">
+          <p className="temperature-range text-sm sm:text-base">
             {loading ? "" : `最高: ${maxTemperature}°C / 最低: ${minTemperature}°C`}
           </p>
         </div>
-        <p>{latitude && longitude ? `現在地: ${locationName}` : ""}</p>
+        <p className="location mt-2 text-sm sm:text-base">
+          {latitude && longitude ? `現在地: ${locationName}` : ""}
+        </p>
         {!loading && <AIAssistant weather={weather} temperature={temperature} />}
       </section>
 
       {/* 今日の予定 */}
-      <section>
-        <h3>予定リスト</h3>
-        <ul className="events">
+      <section className="events-section mb-6">
+        <h3 className="text-xl sm:text-2xl font-semibold">予定リスト</h3>
+        <ul className="events mt-4">
           {events.map((event, index) => (
-            <li key={index}>
+            <li key={index} className="flex justify-between items-center mb-2">
               <span>{event.title} ({event.date})</span>
-              <button onClick={() => handleDeleteEvent(event.date)}>削除</button>
+              <button
+                onClick={() => handleDeleteEvent(event.date)}
+                className="bg-red-500 text-white px-2 py-1 rounded-md"
+              >
+                削除
+              </button>
             </li>
           ))}
         </ul>
       </section>
 
       {/* カレンダー */}
-      <section>
+      <section className="calendar-section mb-6">
         <FullCalendar
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridDay"
           headerToolbar={{
-            left: "title",
-            center: "dayGridMonth,timeGridWeek,timeGridDay",
+            left: "dayGridMonth,timeGridWeek,timeGridDay",
             right: "prev,next today",
           }}
           events={events}
           dateClick={handleDateClick}
           height="auto"
-          aspectRatio={1.5}  // 画面幅に合わせて縦横比を調整
-          contentHeight="auto"  // 高さを自動調整
+          aspectRatio={1.5}
+          contentHeight="auto"
         />
       </section>
 
       {/* 予定入力フォーム */}
       {selectedDate && (
-        <section>
-          <h3>予定を入力</h3>
+        <section className="event-input-form bg-white shadow-md rounded-lg p-4">
+          <h3 className="text-lg sm:text-xl font-semibold">予定を入力</h3>
           <input
             type="text"
             value={newEventTitle}
             onChange={(e) => setNewEventTitle(e.target.value)}
             placeholder="予定を入力"
+            className="mt-2 p-2 border border-gray-300 rounded-md w-full"
           />
-          <button onClick={handleSaveEvent}>保存</button>
+          <button
+            onClick={handleSaveEvent}
+            className="mt-4 px-6 py-2 bg-blue-500 text-white rounded-md"
+          >
+            保存
+          </button>
         </section>
       )}
     </div>

@@ -53,17 +53,17 @@ const AIAssistant: React.FC<AIAssistantProps> = ({ weather, temperature }) => {
   };
 
   return (
-    <div className="mt-4 p-4 bg-gray-100 shadow-md rounded-lg text-center">
-      <h2 className="text-lg font-semibold">AIアシスタントの提案</h2>
+    <div className="mt-4 p-4 bg-gray-100 shadow-md rounded-lg text-center max-w-4xl mx-auto">
+      <h2 className="text-lg font-semibold text-center sm:text-xl">AIアシスタントの提案</h2>
 
       {loading ? (
         <p>提案を生成中...</p> // ローディング中の表示
       ) : suggestion ? (
-        <p className="text-sm">{suggestion}</p> // 提案内容の表示
+        <p className="text-sm sm:text-base">{suggestion}</p> // 提案内容の表示
       ) : (
         <button
           onClick={fetchScheduleSuggestion} // ボタンで提案を取得
-          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md shadow-md"
+          className="mt-2 px-4 py-2 bg-blue-500 text-white rounded-md shadow-md sm:px-6 sm:py-3"
         >
           スケジュールを取得
         </button>
