@@ -162,6 +162,7 @@ const CalendarPage = () => {
           initialView="timeGridDay"
           headerToolbar={{
             left: "dayGridMonth,timeGridWeek,timeGridDay",
+            center: "title",
             right: "prev,next today",
           }}
           events={events}
