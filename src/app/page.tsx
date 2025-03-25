@@ -8,27 +8,16 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import AIAssistant from "./components/AIAssistant";
 
-// 天気データ取得
-const fetchWeatherData = async (lat: number, lon: number) => {
+// 天気データ取得（大阪固定）
+const fetchWeatherData = async () => {
   const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
-
   if (!apiKey) {
     throw new Error("APIキーが設定されていません");
   }
-
   const response = await axios.get(
-    `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric&lang=ja`
+    `https://api.openweathermap.org/data/2.5/weather?lat=34.6937&lon=135.5023&appid=${apiKey}&units=metric&lang=ja`
   );
   return response.data;
-};
-
-// 逆ジオコーディング（地名取得）
-const fetchLocationName = async (lat: number, lon: number) => {
-  const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
-  const response = await axios.get(
-    `https://api.openweathermap.org/data/2.5/reverse?lat=${lat}&lon=${lon}&appid=${apiKey}&lang=ja`
-  );
-  return response.data[0]?.name || "不明";
 };
 
 const CalendarPage = () => {
@@ -37,9 +26,6 @@ const CalendarPage = () => {
   const [maxTemperature, setMaxTemperature] = useState<number>(0);
   const [minTemperature, setMinTemperature] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
-  const [latitude, setLatitude] = useState<number | null>(null);
-  const [longitude, setLongitude] = useState<number | null>(null);
-  const [locationName, setLocationName] = useState<string>("");
   const [events, setEvents] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [newEventTitle, setNewEventTitle] = useState<string>("");
@@ -47,26 +33,20 @@ const CalendarPage = () => {
   useEffect(() => {
     const fetchWeather = async () => {
       try {
-        // どの環境でも大阪の天気情報を取得（固定）
-        const data = await fetchWeatherData(34.6937, 135.5023);
+        const data = await fetchWeatherData();
         setWeather(data.weather[0].description);
         setTemperature(data.main.temp);
         setMaxTemperature(data.main.temp_max);
         setMinTemperature(data.main.temp_min);
-        setLocationName("大阪府");
         setLoading(false);
       } catch (error) {
         console.error("天気情報の取得に失敗しました", error);
         setLoading(false);
       }
     };
-    
-    fetchWeather();
 
-    const storedEvents = localStorage.getItem("events");
-    if (storedEvents) {
-      setEvents(JSON.parse(storedEvents));
-    }
+    fetchWeather();
+    setEvents(JSON.parse(localStorage.getItem("events") || "[]"));
   }, []);
 
   const handleDateClick = (info: any) => {
@@ -108,9 +88,7 @@ const CalendarPage = () => {
             {loading ? "" : `最高: ${maxTemperature}°C / 最低: ${minTemperature}°C`}
           </p>
         </div>
-        <p className="location mt-2 text-sm sm:text-base">
-          {latitude && longitude ? `現在地: ${locationName}` : ""}
-        </p>
+        <p className="location mt-2 text-sm sm:text-base">大阪府</p>
         {!loading && <AIAssistant weather={weather} temperature={temperature} />}
       </section>
 
