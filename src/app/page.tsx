@@ -45,45 +45,22 @@ const CalendarPage = () => {
   const [newEventTitle, setNewEventTitle] = useState<string>("");
 
   useEffect(() => {
-    const isProduction = process.env.NODE_ENV === "production";
     const fetchWeather = async () => {
       try {
-        if (isProduction) {
-          navigator.geolocation.getCurrentPosition(
-            async (position) => {
-              const { latitude, longitude } = position.coords;
-              setLatitude(latitude);
-              setLongitude(longitude);
-              const data = await fetchWeatherData(latitude, longitude);
-              setWeather(data.weather[0].description);
-              setTemperature(data.main.temp);
-              setMaxTemperature(data.main.temp_max);
-              setMinTemperature(data.main.temp_min);
-              setLoading(false);
-
-              const location = await fetchLocationName(latitude, longitude);
-              setLocationName(location);
-            },
-            () => {
-              alert("位置情報を取得できませんでした");
-              setLoading(false);
-            }
-          );
-        } else {
-          const data = await fetchWeatherData(34.6937, 135.5023); // 大阪府の緯度経度
-          setWeather(data.weather[0].description);
-          setTemperature(data.main.temp);
-          setMaxTemperature(data.main.temp_max);
-          setMinTemperature(data.main.temp_min);
-          setLoading(false);
-          setLocationName("大阪府");
-        }
+        // どの環境でも大阪の天気情報を取得（固定）
+        const data = await fetchWeatherData(34.6937, 135.5023);
+        setWeather(data.weather[0].description);
+        setTemperature(data.main.temp);
+        setMaxTemperature(data.main.temp_max);
+        setMinTemperature(data.main.temp_min);
+        setLocationName("大阪府");
+        setLoading(false);
       } catch (error) {
         console.error("天気情報の取得に失敗しました", error);
         setLoading(false);
       }
     };
-
+    
     fetchWeather();
 
     const storedEvents = localStorage.getItem("events");
